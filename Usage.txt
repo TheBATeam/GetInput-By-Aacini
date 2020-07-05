@@ -1,0 +1,82 @@
+Get input from both keyboard and mouse.
+
+GetInput [/T msecs] [/I] [{"chars"|keycode}...]
+         [ /M left top right bottom ... [/H [h1 h2 h3 ...]] ]
+
+    /T msecs        Time to wait in milliseconds.
+    /I              Ignore case of letters in given "chars" and keycodes.
+    "chars"         Valid input Ascii characters.
+    keycode         Valid input key code(s).
+    /M l t r b ...  Coordinates of input selection boxes for mouse clicks.
+    /H h1 h2 h3 ... Color attributes for "Hover" effect. See: COLOR /?
+
+This program read input from keyboard and mouse and return it via ERRORLEVEL.
+
+If no parameter is given, it waits for a key press or mouse button click and
+return a value that indicate the input accordingly to the table given below.
+
+If /T switch is given, it waits the maximum number of milliseconds specified;
+if the value is zero, it returns immediately. If there is no previous input or
+new input in the given lapse, the returned value is zero.
+
+Extended and cursor control keys can be specified via numeric key codes; see
+the table of equivalences below. If /I switch is given, the letters in "chars"
+string and keycodes use case-insensitive match.
+
+If a list of valid input is given, it returns the *position* of the input key
+in the list starting at one. If both characters and key codes are intermixed,
+they all are numbered accordingly to their positions.
+
+If a list of coordinates for selection boxes is given, the *position* of the
+selected box in the list is returned starting at one; this means that the
+valid keys and the selection boxes share the same values and there is no way
+to distinguish they, unless both lists were specifically created to do so.
+
+If /H switch is given, the "Hover" effect when the mouse pointer pass over the
+selection boxes is enabled. The hover color will be a standard one, or several
+colors may be given after /H switch for all boxes; if there are less colors
+than boxes, the last color will be reused. The color at the first position of
+a box will be used to redraw the original contents *of the whole box*.
+
+Table of equivalences for input key codes given or values returned:
+
+Keyboard keys have positive values.
+- Control-keys in 1..31 range: Ctrl_C=3, TabKey=9, EnterKey=13, EscKey=27, etc.
+  Shift_Tab (BackTab) is a special case; its value was choosen as 31.
+- Ascii characters in 32..191 range: Space=32, A=65, a=97, etc.
+- Alt-keys in 192..255 range: Alt_1=209, Alt_A=225, Alt_Z=250, etc.
+- Extended-keys in 256..511 range:
+  PageUp=289, PageDown=290, EndKey=291, HomeKey=292, LeftArrow=293, UpArrow=294
+  RightArrow=295, DownArrow=296, InsKey=301, DelKey=302, F1=368, ..., F12=379.
+  In Shift-extended key combinations, add 256: Shift_PageUp=545, etc.
+
+Extended keys values use the Virtual Key Code value plus 256. See:
+http://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx
+
+When no /M switch (list of selection boxes) is given, mouse button click
+positions are returned as negative errorlevel values.
+
+To get the position of a mouse click, use this method:
+   GetInput
+   if %errorlevel% gtr 0 (
+      echo Key pressed: %errorlevel%
+   ) else (
+      rem Mouse button clicked
+      set /A "input=-%errorlevel%, row=input >> 16, col=input & 0xFFFF"
+      if !col! lss 32768 (
+         echo LEFT button clicked at !row!,!col!
+      ) else (
+         set /A col-=32768
+         echo RIGHT button clicked at !row!,!col!
+      )
+   )
+
+To specify a right-button click in /M switch selection boxes, add 32768 to
+column coordinates, that is, to both left and right ones. Screen coordinates
+start in 0 0 at the left-top corner of the screen.
+
+"GetInput Test.bat" program show the values of a series of keys/clicks:
+http://www.dostips.com/forum/viewtopic.php?f=3&t=5330&p=32241#p32241
+
+An example of the use of this program is shown in 2048.bat game at:
+http://www.dostips.com/forum/viewtopic.php?f=3&t=5701&p=35407#p35407
